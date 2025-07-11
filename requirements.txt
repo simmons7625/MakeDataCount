@@ -1,0 +1,15 @@
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+jupyter
+kaggle
+transformers
+torch
+datasets
+spacy
+nltk
+lxml
+BeautifulSoup4
+tqdm
