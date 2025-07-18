@@ -1,10 +1,6 @@
-# Data files
-data/
-*.csv
-*.json
-*.xml
-*.pdf
-*.zip
+# dataset
+dataset/
+
 
 # Jupyter Notebook
 .ipynb_checkpoints/

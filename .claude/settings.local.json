@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source:*)",
+      "Bash(conda activate:*)",
+      "Bash(pip install:*)",
+      "mcp__ide__executeCode",
+      "WebFetch(domain:www.sakanaai.org)"
+    ],
+    "deny": []
+  }
+}
