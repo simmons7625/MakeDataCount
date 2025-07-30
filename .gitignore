@@ -1,6 +1,15 @@
-# dataset
+# Dataset and data files
 dataset/
+data/
+*.csv
+*.json
+*.pdf
+*.txt
 
+# uv (Python package manager)
+.python-version
+.uv/
+uv.lock
 
 # Jupyter Notebook
 .ipynb_checkpoints/
@@ -31,6 +40,11 @@ wheels/
 *.pth
 *.pt
 
+# Hugging Face models cache
+.cache/
+models/
+huggingface_hub/
+
 # Environment
 .env
 .venv
@@ -56,3 +70,8 @@ Thumbs.db
 
 # wandb
 */wandb/*
+
+# Local models
+qwen3*
+*.bin
+*.safetensors
