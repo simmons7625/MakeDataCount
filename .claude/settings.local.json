@@ -5,7 +5,8 @@
       "Bash(conda activate:*)",
       "Bash(pip install:*)",
       "mcp__ide__executeCode",
-      "WebFetch(domain:www.sakanaai.org)"
+      "WebFetch(domain:www.sakanaai.org)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

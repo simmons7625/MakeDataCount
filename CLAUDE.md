@@ -96,16 +96,58 @@ uv run jupyter nbconvert --execute --inplace notebooks/mdc-qwen3.ipynb
 
 ## 🛠 Development Workflow
 
-### Code Quality
+### Code Quality & Pre-commit
 ```bash
-# Format code (if black is added)
+# Install development dependencies (includes pre-commit)
+uv sync --group dev
+
+# Install pre-commit hooks (one-time setup)
+uv run pre-commit install
+
+# Run pre-commit on all files
+uv run pre-commit run --all-files
+
+# Run specific hooks
+uv run pre-commit run black --all-files
+uv run pre-commit run flake8 --all-files
+
+# Format code manually
 uv run black .
 
-# Type checking (if mypy is added)
+# Type checking
 uv run mypy .
 
-# Run tests (if pytest is added)  
+# Import sorting
+uv run isort .
+
+# Linting
+uv run flake8 .
+
+# Security scanning
+uv run bandit -r src/
+
+# Run tests
 uv run pytest
+
+# Run tests with coverage
+uv run pytest --cov=src --cov-report=html
+```
+
+### Pre-commit Hooks
+Pre-commit runs automatically on every commit and includes:
+- **black**: Code formatting (PEP 8 compliant)
+- **isort**: Import sorting and organization
+- **flake8**: Code linting and style checking
+- **mypy**: Static type checking
+- **bandit**: Security vulnerability scanning
+- **nbqa**: Jupyter notebook code quality
+- **pydocstyle**: Docstring style checking
+- **General checks**: trailing whitespace, file size limits, merge conflicts
+
+### Bypassing Pre-commit (Use Sparingly)
+```bash
+# Skip pre-commit hooks for emergency commits
+git commit --no-verify -m "Emergency commit message"
 ```
 
 ### Dependency Management

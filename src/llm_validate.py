@@ -1,5 +1,6 @@
-import polars as pl
 import os
+
+import polars as pl
 
 from helpers import *
 
@@ -116,41 +117,87 @@ Few-shot examples
 “Protein structure described in Science (DOI 10.1126/science.abc1234).” → B
 """.strip()
 
+
 def build_df():
-    df = pl.read_parquet('/tmp/extracted.parquet')
-    df.filter(~is_doi_link('dataset_id')).select('article_id', 'dataset_id').write_csv('/tmp/accid_sub.csv')
-    return df.filter(is_doi_link('dataset_id'))
+    df = pl.read_parquet("/tmp/extracted.parquet")
+    df.filter(~is_doi_link("dataset_id")).select("article_id", "dataset_id").write_csv(
+        "/tmp/accid_sub.csv"
+    )
+    return df.filter(is_doi_link("dataset_id"))
+
 
 def build_prompt(tokenizer, df):
     prompts = []
-    for doi, text in df.select('dataset_id', 'window').rows():
-        messages = [{'role':'system','content': SYS_PROMPT_CLASSIFY_DOI}, {'role':'user', 'content': text}]
-        prompts.append(tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=False))
-    return df.with_columns(pl.Series('prompt', prompts))
+    for doi, text in df.select("dataset_id", "window").rows():
+        messages = [
+            {"role": "system", "content": SYS_PROMPT_CLASSIFY_DOI},
+            {"role": "user", "content": text},
+        ]
+        prompts.append(
+            tokenizer.apply_chat_template(
+                messages, add_generation_prompt=True, tokenize=False
+            )
+        )
+    return df.with_columns(pl.Series("prompt", prompts))
 
-if __name__=='__main__':
+
+if __name__ == "__main__":
     os.environ["VLLM_USE_V1"] = "0"
     import vllm
     from logits_processor_zoo.vllm import MultipleChoiceLogitsProcessor
+
     model_path = "/kaggle/input/qwen2.5/transformers/32b-instruct-awq/1"
-    llm = vllm.LLM(model_path, quantization='awq', tensor_parallel_size=2, gpu_memory_utilization=0.9, trust_remote_code=True, dtype="half", enforce_eager=True, max_model_len=2048, disable_log_stats=True, disable_custom_all_reduce=True, enable_prefix_caching=True, task='generate')
+    llm = vllm.LLM(
+        model_path,
+        quantization="awq",
+        tensor_parallel_size=2,
+        gpu_memory_utilization=0.9,
+        trust_remote_code=True,
+        dtype="half",
+        enforce_eager=True,
+        max_model_len=2048,
+        disable_log_stats=True,
+        disable_custom_all_reduce=True,
+        enable_prefix_caching=True,
+        task="generate",
+    )
     tokenizer = llm.get_tokenizer()
     df = build_df()
     df = build_prompt(tokenizer, df)
-    prompts = df['prompt'].to_list()
+    prompts = df["prompt"].to_list()
     mclp = MultipleChoiceLogitsProcessor(tokenizer, choices=["A", "B"])
-    outputs = llm.generate(prompts, vllm.SamplingParams(seed=777, temperature=0, skip_special_tokens=True, max_tokens=1, logits_processors=[mclp], logprobs=len(mclp.choices)), use_tqdm=True)
-    logprobs = [{lp.decoded_token: lp.logprob for lp in list(lps)} for lps in [output.outputs[0].logprobs[0].values() for output in outputs]]
+    outputs = llm.generate(
+        prompts,
+        vllm.SamplingParams(
+            seed=777,
+            temperature=0,
+            skip_special_tokens=True,
+            max_tokens=1,
+            logits_processors=[mclp],
+            logprobs=len(mclp.choices),
+        ),
+        use_tqdm=True,
+    )
+    logprobs = [
+        {lp.decoded_token: lp.logprob for lp in list(lps)}
+        for lps in [output.outputs[0].logprobs[0].values() for output in outputs]
+    ]
     choices = [max(d, key=d.get) for d in logprobs]
-    types = {'A': True, 'B': False}
+    types = {"A": True, "B": False}
     choices = [types[c] for c in choices]
-    df = df.with_columns(pl.Series('type', choices))
-    df.filter(pl.col('type')).select('article_id', 'dataset_id').write_csv('/tmp/doi_sub.csv')
-    df = pl.concat([pl.read_csv('/tmp/doi_sub.csv'), pl.read_csv('/tmp/accid_sub.csv')])
+    df = df.with_columns(pl.Series("type", choices))
+    df.filter(pl.col("type")).select("article_id", "dataset_id").write_csv(
+        "/tmp/doi_sub.csv"
+    )
+    df = pl.concat([pl.read_csv("/tmp/doi_sub.csv"), pl.read_csv("/tmp/accid_sub.csv")])
     df = assume_type(df)
-    df.select(['article_id', 'dataset_id', 'type']).with_row_index(name='row_id').write_csv('/kaggle/working/submission.csv')
+    df.select(["article_id", "dataset_id", "type"]).with_row_index(
+        name="row_id"
+    ).write_csv("/kaggle/working/submission.csv")
     if not IS_KAGGLE_SUBMISSION:
         results = evaluate(df)
-        for r in results: l.info(r) 
-        results = evaluate(df, on=['article_id', 'dataset_id', 'type'])
-        for r in results: l.info(r)
+        for r in results:
+            l.info(r)
+        results = evaluate(df, on=["article_id", "dataset_id", "type"])
+        for r in results:
+            l.info(r)

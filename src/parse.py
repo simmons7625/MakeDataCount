@@ -1,9 +1,12 @@
 import argparse
 from pathlib import Path
+
 import pymupdf
-from helpers import get_logger, PDF_DIR
+
+from helpers import PDF_DIR, get_logger
 
 l = get_logger()
+
 
 def pdf_to_txt(output_dir: Path):
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -18,15 +21,17 @@ def pdf_to_txt(output_dir: Path):
             with pymupdf.open(pdf_file) as doc:
                 for page in doc:
                     text += page.get_text()
-            txt_file.write_text(text, encoding='utf-8')
+            txt_file.write_text(text, encoding="utf-8")
         except Exception:
             pass
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('output_dir', type=Path, help='Directory to save text files')
+    parser.add_argument("output_dir", type=Path, help="Directory to save text files")
     args = parser.parse_args()
     pdf_to_txt(args.output_dir)
+
 
 if __name__ == "__main__":
     main()
